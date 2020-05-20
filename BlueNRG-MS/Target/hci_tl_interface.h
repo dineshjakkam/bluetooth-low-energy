@@ -45,7 +45,7 @@
 #define HCI_TL_SPI_CS_PIN     GPIO_PIN_1
 
 #define HCI_TL_RST_PORT       GPIOA
-#define HCI_TL_RST_PIN        GPIO_PIN_2
+#define HCI_TL_RST_PIN        GPIO_PIN_8
 
 /* Exported variables --------------------------------------------------------*/
 extern EXTI_HandleTypeDef     hexti0;
