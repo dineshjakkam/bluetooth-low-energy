@@ -57,3 +57,4 @@ dkms.conf
 .mxproject
 *.xml
 Debug/*
+.DS_Store
