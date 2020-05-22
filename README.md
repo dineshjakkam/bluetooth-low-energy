@@ -9,4 +9,6 @@ The aim of this project is to gain solid practical understanding of Bluetooth lo
 * Understand the complete BLE stack
 * Build Bluetooth Low Energy embedded devices
 
-This project is in progress. I will keep posting the updates.
+### See documentation for more details:
+1. <a href="docs/bluetooth-low-energy.pdf">Project report</a>
+2. <a href="docs/bluetooth-low-energy.txt">Configuration file</a>
