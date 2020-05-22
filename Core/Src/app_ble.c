@@ -7,6 +7,7 @@
 #include "bluenrg_gatt_aci.h"
 #include "bluenrg_gap_aci.h"
 #include "bluenrg_utils.h"
+#include "services.h"
 
 #include <stdint.h>
 
@@ -17,6 +18,7 @@
  *
  */
 void MX_BlueNRG_MS_Init(void){
+	tBleStatus ret;
 	const char* name = "Flux";
 	uint8_t server_bdaddr[] = {0x01,0x02,0x03,0x04,0x05,0x06};
 	uint8_t bdaddr[BDADDR_SIZE];
@@ -38,6 +40,9 @@ void MX_BlueNRG_MS_Init(void){
 	aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
 	aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0,
 			strlen(name), (uint8_t *)name);
+
+	//Initialize services here
+	ret = addSimpleService();
 }
 
 /*
@@ -46,7 +51,7 @@ void MX_BlueNRG_MS_Init(void){
  */
 void MX_BlueNRG_MS_Process(void){
 	tBleStatus ret;
-	const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME, 'B', 'L', 'E', '-', 'G','-', 'U', 'p'};
+	const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME, 'D', 'i', 'n', 'e', 's', 'h', '-', 'L', 'a', 'b'};
 
 	hci_le_set_scan_resp_data(0, NULL);
 
