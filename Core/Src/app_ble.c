@@ -11,8 +11,11 @@
 #include "callbacks.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define BDADDR_SIZE 6
+
+static bool CONNECTABLE = TRUE;
 
 void MX_BlueNRG_MS_Init(void);
 void MX_BlueNRG_MS_Process(void);
@@ -24,7 +27,7 @@ void event_user_notify(void *);
  */
 void MX_BlueNRG_MS_Init(void){
 	tBleStatus ret;
-	const char* name = "Flux";
+	const char* name = "Jakkampudi";
 	uint8_t server_bdaddr[] = {0x01,0x02,0x03,0x04,0x05,0x06};
 	uint8_t bdaddr[BDADDR_SIZE];
 
@@ -42,12 +45,13 @@ void MX_BlueNRG_MS_Init(void){
 
 	//Bluet0oth chip that I have is IDB05A1
 	aci_gatt_init();
-	aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+	aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1, 0, strlen(name), &service_handle, &dev_name_char_handle, &appearance_char_handle);
 	aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0,
 			strlen(name), (uint8_t *)name);
 
 	//Initialize services here
-	ret = addSimpleService();
+	addNucleoService();
+	addPbService();
 }
 
 /*
@@ -55,6 +59,31 @@ void MX_BlueNRG_MS_Init(void){
  *  @retvalue None
  */
 void MX_BlueNRG_MS_Process(void){
+
+	if(CONNECTABLE){
+		establish_connection();
+	}
+	hci_user_evt_proc();
+}
+
+/*
+ * @brief set connectable status on disconnection complete
+ */
+void set_connectable_status(void){
+	CONNECTABLE = TRUE;
+}
+
+/*
+ * @brief reset connectable status on connection complete
+ */
+void reset_connectable_status(void){
+	CONNECTABLE = FALSE;
+}
+
+/*
+ * Establish connection by indirect advertising in discoverable mode
+ */
+tBleStatus establish_connection(void){
 	tBleStatus ret;
 	const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME, 'D', 'i', 'n', 'e', 's', 'h', '-', 'L', 'a', 'b'};
 
@@ -63,8 +92,7 @@ void MX_BlueNRG_MS_Process(void){
 	ret = aci_gap_set_discoverable(ADV_IND, 0, 0, PUBLIC_ADDR,
 			NO_WHITE_LIST_USE, sizeof(local_name), local_name, 0,
 			NULL, 0, 0);
-
-	hci_user_evt_proc();
+	return ret;
 }
 
 /*
@@ -108,6 +136,13 @@ void event_user_notify(void *pData){
 					cb_on_read_request(read_pmt_req_evt->attr_handle);
 				}
 				break;
+				case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
+				{
+					evt_gatt_attr_modified_IDB05A1 *attr_modified_evt = (void *)vendor_evt->data;
+					cb_on_attribute_modified(attr_modified_evt->attr_handle,
+							attr_modified_evt->data_length,
+							attr_modified_evt->att_data);
+				}
 			}
 		}
 		break;

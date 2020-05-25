@@ -2,8 +2,10 @@
 #include "usart.h"
 #include "gpio.h"
 #include "app_ble.h"
+#include "stm32f4_nucleo_f401re.h"
 
 void SystemClock_Config(void);
+static void UserIoInit(void);
 
 int main(void)
 {
@@ -15,8 +17,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  UserIoInit();
   MX_USART2_UART_Init();
   MX_BlueNRG_MS_Init();
+
 
   while (1)
   {
@@ -66,6 +70,15 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/* @brief Initialize LED, COM port, Push button using
+ * 			using Nucleo BSP
+ */
+void UserIoInit(void){
+	BSP_LED_Init(LED2);
+	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
+	BSP_COM_Init(COM1);
 }
 
 /**

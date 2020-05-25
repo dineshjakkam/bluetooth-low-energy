@@ -10,7 +10,8 @@
 
 #include "bluenrg_aci_const.h"
 
-tBleStatus addSimpleService(void);
+tBleStatus addNucleoService(void);
+tBleStatus addPbService(void);
 void update_data(uint16_t);
 
 #endif /* INC_SERVICES_H_ */

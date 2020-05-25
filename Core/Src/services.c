@@ -15,61 +15,101 @@
 #include "bluenrg_gap_aci.h"
 #include "bluenrg_utils.h"
 #include "services.h"
+#include "stm32f4_nucleo_f401re.h"
 
 #include<stdint.h>
 
+const uint8_t service_uuid_pb[16] = {0x66, 0x9a, 0x0c, 0x20, 0x00, 0x08, 0x96, 0x9e, 0xe2, 0x11, 0x9e, 0xb1, 0xdf, 0xf2, 0x73, 0xd9};
 const uint8_t service_uuid[16] = {0x66, 0x9a, 0x0c, 0x20, 0x00, 0x08, 0x96, 0x9e, 0xe2, 0x11, 0x9e, 0xb1, 0xe0, 0xf2, 0x73, 0xd9};
-const uint8_t char_uuid[16] = {0x66, 0x9a, 0x0c, 0x20, 0x00, 0x08, 0x96, 0x9e, 0xe2, 0x11, 0x9e, 0xb1, 0xe1, 0xf2, 0x73, 0xd9};
+const uint8_t char_uuid_pb[16] = {0x66, 0x9a, 0x0c, 0x20, 0x00, 0x08, 0x96, 0x9e, 0xe2, 0x11, 0x9e, 0xb1, 0xe1, 0xf2, 0x73, 0xd9};
+const uint8_t char_uuid_led[16] = {0x66, 0x9a, 0x0c, 0x20, 0x00, 0x08, 0x96, 0x9e, 0xe2, 0x11, 0x9e, 0xb1, 0xe2, 0xf2, 0x73, 0xd9};
+const uint8_t char_uuid_led_status[16] = {0x66, 0x9a, 0x0c, 0x20, 0x00, 0x08, 0x96, 0x9e, 0xe2, 0x11, 0x9e, 0xb1, 0xe3, 0xf2, 0x73, 0xd9};
 const uint8_t char_desc_uuid[2] = {0x12, 0x34};
 
-uint16_t myServHandle, myCharHandle, myCharDescHandle;
+uint16_t nucleoServHandle, pbServHandle, pbCharHandle, ledCharHandle, ledStatusCharHandle, myCharDescHandle;
+static uint8_t LED_STATUS = 0;
 charactFormat charFormat;
 
 /*
  * @brief defines a service with the char and corresponding descriptors
  * @retvalue status of success
  */
-tBleStatus addSimpleService(void){
+tBleStatus addNucleoService(void){
 	tBleStatus ret;
 
 	aci_gatt_add_serv(UUID_TYPE_128,
 			service_uuid,
 			PRIMARY_SERVICE,
 			0x07,
-			&myServHandle);
+			&nucleoServHandle);
 
-	aci_gatt_add_char(myServHandle,
+	//characteristic to read led status
+	aci_gatt_add_char(nucleoServHandle,
 			UUID_TYPE_128,
-			char_uuid,
+			char_uuid_led_status,
 			2,
 			CHAR_PROP_READ,
 			ATTR_PERMISSION_NONE,
 			GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
 			16,
 			0,
-			&myCharHandle);
+			&ledStatusCharHandle);
 
-	charFormat.format = FORMAT_SINT16;
-	charFormat.exp = -1;
-	charFormat.unit = UNIT_TEMP_CELSIUS;
-	charFormat.name_space = 0;
-	charFormat.desc = 0;
-
-	ret = aci_gatt_add_char_desc(myServHandle,
-			myCharHandle,
-			UUID_TYPE_16,
-			(uint8_t *)&char_desc_uuid,
-			7,
-			7,
-			(void *)&charFormat,
+	//characteristic that send notification on PB press
+	ret = aci_gatt_add_char(nucleoServHandle,
+			UUID_TYPE_128,
+			char_uuid_pb,
+			2,
+			CHAR_PROP_NOTIFY,
 			ATTR_PERMISSION_NONE,
-			ATTR_ACCESS_READ_ONLY,
 			0,
 			16,
-			FALSE,
-			&myCharDescHandle);
+			0,
+			&pbCharHandle);
 
 	return ret;
+}
+
+tBleStatus addPbService(void){
+	tBleStatus ret;
+	ret = aci_gatt_add_serv(UUID_TYPE_128,
+				service_uuid_pb,
+				PRIMARY_SERVICE,
+				0x07,
+				&pbServHandle);
+	//characteristic that toggles LED on write from client
+		ret = aci_gatt_add_char(pbServHandle,
+				UUID_TYPE_128,
+				char_uuid_led,
+				2,
+				CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP,
+				ATTR_PERMISSION_NONE,
+				GATT_NOTIFY_ATTRIBUTE_WRITE,
+				16,
+				0,
+				&ledCharHandle);
+
+
+		charFormat.format = FORMAT_SINT16;
+		charFormat.exp = -1;
+		charFormat.unit = UNIT_UNITLESS;
+		charFormat.name_space = 0;
+		charFormat.desc = 0;
+
+		ret = aci_gatt_add_char_desc(pbServHandle,
+				ledCharHandle,
+				UUID_TYPE_16,
+				(uint8_t *)&char_desc_uuid,
+				7,
+				7,
+				(void *)&charFormat,
+				ATTR_PERMISSION_NONE,
+				ATTR_ACCESS_READ_ONLY,
+				0,
+				16,
+				FALSE,
+				&myCharDescHandle);
+		return ret;
 }
 
 /*
@@ -77,8 +117,15 @@ tBleStatus addSimpleService(void){
  * @param newData The data to update to
  */
 void update_data(uint16_t newData){
-	tBleStatus ret;
-	ret = aci_gatt_update_char_value(myServHandle, myCharHandle, 0, 2, (uint8_t *)&newData);
+	aci_gatt_update_char_value(nucleoServHandle, ledCharHandle, 0, 2, (uint8_t *)&newData);
+}
+
+/*
+ * @brief This is call back called through interrupt on push button pressed
+ * 			On PB pressed notify the client through notification characteristic
+ */
+void BSP_PB_Callback(Button_TypeDef Button){
+	aci_gatt_update_char_value(nucleoServHandle, pbCharHandle, 0, 1, (uint8_t *)&LED_STATUS);
 }
 
 
