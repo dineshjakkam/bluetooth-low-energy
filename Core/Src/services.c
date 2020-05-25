@@ -25,7 +25,10 @@ const uint8_t char_desc_uuid[2] = {0x12, 0x34};
 uint16_t myServHandle, myCharHandle, myCharDescHandle;
 charactFormat charFormat;
 
-
+/*
+ * @brief defines a service with the char and corresponding descriptors
+ * @retvalue status of success
+ */
 tBleStatus addSimpleService(void){
 	tBleStatus ret;
 
@@ -38,10 +41,10 @@ tBleStatus addSimpleService(void){
 	aci_gatt_add_char(myServHandle,
 			UUID_TYPE_128,
 			char_uuid,
-			1,
-			CHAR_PROP_NOTIFY,
+			2,
+			CHAR_PROP_READ,
 			ATTR_PERMISSION_NONE,
-			0,
+			GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
 			16,
 			0,
 			&myCharHandle);
@@ -68,4 +71,15 @@ tBleStatus addSimpleService(void){
 
 	return ret;
 }
+
+/*
+ * @brief updates data in the character
+ * @param newData The data to update to
+ */
+void update_data(uint16_t newData){
+	tBleStatus ret;
+	ret = aci_gatt_update_char_value(myServHandle, myCharHandle, 0, 2, (uint8_t *)&newData);
+}
+
+
 
