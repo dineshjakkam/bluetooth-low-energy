@@ -23,7 +23,13 @@ void cb_on_gap_connection_complete(uint8_t *, uint16_t);
 void cb_on_gap_disconnection_complete(void);
 void cb_on_read_request(uint16_t);
 void cb_on_attribute_modified(uint16_t, uint16_t, uint8_t []);
+uint8_t is_connected(void);
 
+/*
+ * @brief Call back called on successful connection complete
+ * @param peer_addr An array that contains peer address
+ * @param handle connection handle
+ */
 void cb_on_gap_connection_complete(uint8_t peer_addr[], uint16_t handle){
 	CONNECTED = TRUE;
 	connection_handle = handle;
@@ -44,6 +50,14 @@ void cb_on_read_request(uint16_t handle){
 	if(CONNECTED && connection_handle!=0){
 		aci_gatt_allow_read(connection_handle);
 	}
+}
+
+/*
+ * @ brief return the status of connection
+ * @retvalue True if connected, else False
+ */
+uint8_t is_connected(void){
+	return CONNECTED;
 }
 
 

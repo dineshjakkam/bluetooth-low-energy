@@ -13,5 +13,6 @@
 void cb_on_gap_connection_complete(uint8_t *, uint16_t);
 void cb_on_gap_disconnection_complete(void);
 void cb_on_read_request(uint16_t);
+uint8_t is_connected(void);
 
 #endif /* INC_CALLBACKS_H_ */

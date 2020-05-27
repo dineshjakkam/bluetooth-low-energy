@@ -15,7 +15,7 @@
 #include "bluenrg_gap_aci.h"
 #include "bluenrg_utils.h"
 #include "services.h"
-#include "stm32f4_nucleo_f401re.h"
+#include "callbacks.h"
 
 #include<stdint.h>
 
@@ -55,8 +55,57 @@ tBleStatus addNucleoService(void){
 			0,
 			&ledStatusCharHandle);
 
-	//characteristic that send notification on PB press
+	//characteristic that toggles LED on write from client
 	ret = aci_gatt_add_char(nucleoServHandle,
+			UUID_TYPE_128,
+			char_uuid_led,
+			2,
+			CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP,
+			ATTR_PERMISSION_NONE,
+			GATT_NOTIFY_ATTRIBUTE_WRITE,
+			16,
+			0,
+			&ledCharHandle);
+
+
+	charFormat.format = FORMAT_SINT16;
+	charFormat.exp = -1;
+	charFormat.unit = UNIT_UNITLESS;
+	charFormat.name_space = 0;
+	charFormat.desc = 0;
+
+	ret = aci_gatt_add_char_desc(nucleoServHandle,
+			ledCharHandle,
+			UUID_TYPE_16,
+			(uint8_t *)&char_desc_uuid,
+			7,
+			7,
+			(void *)&charFormat,
+			ATTR_PERMISSION_NONE,
+			ATTR_ACCESS_READ_ONLY,
+			0,
+			16,
+			FALSE,
+			&myCharDescHandle);
+	return ret;
+
+
+}
+
+/*
+ * @brief The service that handles the push button interrupt
+ * `		Notifies the state of LED on PB press
+ */
+tBleStatus addPbService(void){
+	tBleStatus ret;
+	ret = aci_gatt_add_serv(UUID_TYPE_128,
+			service_uuid_pb,
+			PRIMARY_SERVICE,
+			0x07,
+			&pbServHandle);
+
+	//characteristic that send notification on PB press
+	ret = aci_gatt_add_char(pbServHandle,
 			UUID_TYPE_128,
 			char_uuid_pb,
 			2,
@@ -68,48 +117,6 @@ tBleStatus addNucleoService(void){
 			&pbCharHandle);
 
 	return ret;
-}
-
-tBleStatus addPbService(void){
-	tBleStatus ret;
-	ret = aci_gatt_add_serv(UUID_TYPE_128,
-				service_uuid_pb,
-				PRIMARY_SERVICE,
-				0x07,
-				&pbServHandle);
-	//characteristic that toggles LED on write from client
-		ret = aci_gatt_add_char(pbServHandle,
-				UUID_TYPE_128,
-				char_uuid_led,
-				2,
-				CHAR_PROP_WRITE | CHAR_PROP_WRITE_WITHOUT_RESP,
-				ATTR_PERMISSION_NONE,
-				GATT_NOTIFY_ATTRIBUTE_WRITE,
-				16,
-				0,
-				&ledCharHandle);
-
-
-		charFormat.format = FORMAT_SINT16;
-		charFormat.exp = -1;
-		charFormat.unit = UNIT_UNITLESS;
-		charFormat.name_space = 0;
-		charFormat.desc = 0;
-
-		ret = aci_gatt_add_char_desc(pbServHandle,
-				ledCharHandle,
-				UUID_TYPE_16,
-				(uint8_t *)&char_desc_uuid,
-				7,
-				7,
-				(void *)&charFormat,
-				ATTR_PERMISSION_NONE,
-				ATTR_ACCESS_READ_ONLY,
-				0,
-				16,
-				FALSE,
-				&myCharDescHandle);
-		return ret;
 }
 
 /*
@@ -124,8 +131,10 @@ void update_data(uint16_t newData){
  * @brief This is call back called through interrupt on push button pressed
  * 			On PB pressed notify the client through notification characteristic
  */
-void BSP_PB_Callback(Button_TypeDef Button){
-	aci_gatt_update_char_value(nucleoServHandle, pbCharHandle, 0, 1, (uint8_t *)&LED_STATUS);
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(is_connected()){
+		aci_gatt_update_char_value(pbServHandle, pbCharHandle, 0, 1, (uint8_t *)&LED_STATUS);
+	}
 }
 
 
