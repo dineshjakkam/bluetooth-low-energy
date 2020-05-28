@@ -60,7 +60,10 @@ void MX_BlueNRG_MS_Init(void){
  */
 void MX_BlueNRG_MS_Process(void){
 
-	establish_connection();
+	if(CONNECTABLE == TRUE)
+		establish_connection();
+
+	send_notification();
 	hci_user_evt_proc();
 }
 
@@ -136,11 +139,10 @@ void event_user_notify(void *pData){
 				break;
 				case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
 				{
-					/*evt_gatt_attr_modified_IDB05A1 *attr_modified_evt = (void *)vendor_evt->data;
+					evt_gatt_attr_modified_IDB05A1 *attr_modified_evt = (void *)vendor_evt->data;
 					cb_on_attribute_modified(attr_modified_evt->attr_handle,
 							attr_modified_evt->data_length,
-							attr_modified_evt->att_data);*/
-					__asm("NOP");
+							attr_modified_evt->att_data);
 
 				}
 				break;

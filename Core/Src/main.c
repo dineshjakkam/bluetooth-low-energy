@@ -21,7 +21,6 @@ int main(void)
 
   while (1)
   {
-	  HAL_GPIO_TogglePin(GreenLED_GPIO_Port, GreenLED_Pin);
 	  MX_BlueNRG_MS_Process();
   }
 }
