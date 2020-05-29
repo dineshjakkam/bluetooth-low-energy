@@ -12,3 +12,4 @@ The aim of this project is to gain solid practical understanding of Bluetooth lo
 ### See documentation for more details:
 1. <a href="docs/bluetooth-low-energy.pdf">Project report</a>
 2. <a href="docs/bluetooth-low-energy.txt">Configuration file</a>
+3. [Demo](https://www.youtube.com/watch?v=9G3L847c0DI)
